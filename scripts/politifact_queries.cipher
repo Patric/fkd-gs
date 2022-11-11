@@ -1,0 +1,50 @@
+LOAD CSV WITH HEADERS FROM "file:///nodes_to_graph_id.csv" AS csvLine1
+MERGE (u:User
+ { 
+    node_id: coalesce(csvLine1.user_node_id, "No user_node_id"),
+    graph_id: coalesce(csvLine1.graph_id, "No graph_id"),
+    label: coalesce(csvLine1.label, "No label"),
+ }
+);
+
+LOAD CSV WITH HEADERS FROM "file:///edges.csv" AS csvLine2
+MATCH (u1:User { node_id: csvLine2.from })
+MATCH (u2:User { node_id: csvLine2.to })
+MERGE (u1)-[:retweeted_post_of]-(u2)
+
+
+CALL gds.graph.project('retweet_network','User','retweeted_post_of');
+CALL gds.wcc.stats('retweet_network')
+YIELD componentCount, componentDistribution
+RETURN componentCount, 
+       componentDistribution.min as min,
+       componentDistribution.max as max,
+       componentDistribution.mean as mean,
+       componentDistribution.p50 as p50,
+       componentDistribution.p75 as p75,
+       componentDistribution.p90 as p90
+
+
+//How many users with more than 1 relation
+
+MATCH (u:User)
+WHERE size((u)-[:retweeted_post_of]-()) > 1
+RETURN u
+
+CALL gds.betweenness.stream('retweet_network')
+YIELD nodeId, score
+MATCH (user: User { label: "1.0"} ) WHERE id(user) = nodeId
+RETURN user.node_id, score
+ORDER BY score DESC
+
+CALL apoc.export.csv.query("
+CALL gds.betweenness.stream('retweet_network')
+YIELD nodeId, score
+MATCH (user: User {label: '0.0'}) WHERE id(user) = nodeId
+RETURN user.label, score", 'betweenness_false_corelation_data.csv', {})
+
+CALL apoc.export.csv.query("
+CALL gds.betweenness.stream('retweet_network')
+YIELD nodeId, score
+MATCH (user: User {label: '1.0'}) WHERE id(user) = nodeId
+RETURN user.label, score", 'betweenness_true_corelation_data.csv', {})
