@@ -40,11 +40,11 @@ ORDER BY score DESC
 CALL apoc.export.csv.query("
 CALL gds.betweenness.stream('retweet_network')
 YIELD nodeId, score
-MATCH (user: User {label: '0.0'}) WHERE id(user) = nodeId
-RETURN user.label, score", 'betweenness_false_corelation_data.csv', {})
+MATCH (user: User) WHERE id(user) = nodeId
+RETURN user.label, score", 'betweenness_corelation_data.csv', {});
 
 CALL apoc.export.csv.query("
-CALL gds.betweenness.stream('retweet_network')
+CALL gds.beta.closeness.stream('retweet_network', {useWassermanFaust: true})
 YIELD nodeId, score
-MATCH (user: User {label: '1.0'}) WHERE id(user) = nodeId
-RETURN user.label, score", 'betweenness_true_corelation_data.csv', {})
+MATCH (user: User) WHERE id(user) = nodeId
+RETURN user.label, score", 'closeness_corelation_data.csv', {})
