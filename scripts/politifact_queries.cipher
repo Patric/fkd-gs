@@ -62,3 +62,10 @@ WITH id(u) as nodeId, size((u)-[:retweeted_post_of]->()) as outDegree, size((u)<
 MATCH (u: User) WHERE id(u) = nodeId
 RETURN u.label, nodeId, outDegree, inDegree, inDegree + outDegree as degree
 ORDER BY degree DESC", 'degree_corelation_data.csv', {})
+
+// PageRank
+CALL gds.pageRank.stream('retweet_network', {maxIterations: 40, dampingFactor: 0.85})
+YIELD nodeId, score
+MATCH (user: User) WHERE id(user) = nodeId
+RETURN user.label, score
+ORDER BY score DESC
