@@ -102,3 +102,87 @@ YIELD nodeId, values
 MATCH (user: User) WHERE id(user) = nodeId
 RETURN nodeId, user.label, values.hub, values.auth
 ORDER BY nodeId ASC", 'hits_correlation_data.csv', {})
+
+
+LOAD CSV WITH HEADERS FROM "file:///tweets_processed.csv" AS csvLine
+MERGE (u:User
+ { 
+    twitter_id: coalesce(csvLine.user_id, "unknown")
+ }
+)
+MERGE (t: Tweet
+ { 
+    twitter_id: coalesce(csvLine.id, "unknown"),
+    text: coalesce(csvLine.id, "unknown"),
+    source: coalesce(csvLine.source, "unknown"),
+    createdAt: coalesce(apoc.date.parse(csvLine.timestamp, "ms", "yyyy-MM-dd HH:mm:ss"), "unknown"),
+    possibly_sensitive: coalesce(csvLine.possibly_sensitive, "unknown"),
+    place: coalesce(csvLine.place, "unknown")
+ }
+)
+MERGE (t)-[:postedBy]->(u)
+
+
+
+LOAD CSV WITH HEADERS FROM "file:///tweets_processed.csv" AS csvLine
+MERGE (u:User
+ { 
+    twitter_id: coalesce(csvLine.user_id, "unknown")
+ }
+)
+MERGE (t: Tweet
+ { 
+    twitter_id: coalesce(csvLine.id, "unknown"),
+    text: coalesce(csvLine.id, "unknown"),
+    source: coalesce(csvLine.source, "unknown"),
+    createdAt: coalesce(apoc.date.parse(csvLine.timestamp, "ms", "yyyy-MM-dd HH:mm:ss"), "unknown"),
+    possibly_sensitive: coalesce(csvLine.possibly_sensitive, "unknown"),
+    place: coalesce(csvLine.place, "unknown")
+ }
+)
+MERGE (t)-[:postedBy]->(u)
+
+
+dbms.memory.heap.initial_size=1G
+dbms.memory.heap.max_size=10G
+dbms.memory.pagecache.size=1G
+
+
+CREATE CONSTRAINT FOR (u:User) REQUIRE u.twitterId IS UNIQUE;
+CREATE CONSTRAINT FOR (t:Tweet) REQUIRE t.twitterId IS UNIQUE;
+
+
+:auto LOAD CSV WITH HEADERS FROM "file:///tweets_processed.csv" AS csvLine
+CALL {
+    
+WITH csvLine
+MERGE (u:User { twitterId: csvLine.user_id })
+CREATE (t: Tweet
+ {  twitterId: csvLine.id,
+    text: coalesce(csvLine.text, "unknown"),
+    source: coalesce(csvLine.source, "unknown"),
+    createdAt: coalesce(date(datetime({ epochmillis: 
+apoc.date.parse(csvLine.timestamp, "ms", "yyyy-MM-dd HH:mm:ss") })), "unknown"),
+    possibly_sensitive: coalesce(csvLine.possibly_sensitive, "unknown"),
+    place: coalesce(csvLine.place, "unknown")
+ }
+)
+CREATE (t)-[:postedBy]->(u)
+} IN TRANSACTIONS OF 50000 ROWS
+
+
+MATCH (t: Tweet) DETACH DELETE t;
+MATCH (u: User) DETACH DELETE u;
+
+// :auto
+LOAD CSV WITH HEADERS FROM "file:///tweets_processed.csv" AS csvLine
+// CALL {
+    
+WITH csvLine
+MATCH (t1: Tweet { twitterId: csvLine.id })
+MATCH (t2: Tweet { twitterId: csvLine.in_reply_to_user_id})
+MATCH (t3: Tweet { twitterId: csvLine.retweeted_status_id})
+WHERE t2 <> 0 AND t2 <> NULL AND t3 <> 0 AND t3 <> NULL
+MERGE (t1)-[:inReplyToStatus { screenName: coalesce(csvLine.in_reply_to_screen_name, 'unknown') }]->(t2)
+MERGE (t1)-[:retweetedStatus]->(t3)
+// } IN TRANSACTIONS OF 50000 ROWS
