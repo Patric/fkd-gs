@@ -3,7 +3,7 @@ MERGE (u:User
  { 
     node_id: coalesce(csvLine1.user_node_id, "No user_node_id"),
     graph_id: coalesce(csvLine1.graph_id, "No graph_id"),
-    label: coalesce(csvLine1.label, "No label"),
+    label: coalesce(csvLine1.label, "No label")
  }
 );
 
@@ -45,7 +45,7 @@ CALL apoc.export.csv.query("
 CALL gds.betweenness.stream('retweet_network')
 YIELD nodeId, score
 MATCH (user: User) WHERE id(user) = nodeId
-RETURN nodeId, user.label, score
+RETURN user.label, score as betweenness_score
 ORDER BY nodeId ASC", 'betweenness_correlation_data.csv', {});
 
 // export closeness correlation data Wasserman and Faust
@@ -54,8 +54,9 @@ CALL apoc.export.csv.query("
 CALL gds.beta.closeness.stream('retweet_network', {useWassermanFaust: true})
 YIELD nodeId, score
 MATCH (user: User) WHERE id(user) = nodeId
-RETURN nodeId, user.label, score
+RETURN user.label, score as closeness_score
 ORDER BY nodeId ASC", 'closeness_correlation_data.csv', {})
+
 
 // export harmonic closeness
 
@@ -63,7 +64,7 @@ CALL apoc.export.csv.query("
 CALL gds.alpha.closeness.harmonic.stream('retweet_network')
 YIELD nodeId, centrality
 MATCH (user: User) WHERE id(user) = nodeId
-RETURN nodeId, user.label, centrality
+RETURN user.label, centrality as harmonic_closeness_centrality
 ORDER BY nodeId ASC", 'harmonic_closeness_correlation_data.csv', {})
 
 // export degree correlation data
@@ -71,36 +72,37 @@ ORDER BY nodeId ASC", 'harmonic_closeness_correlation_data.csv', {})
 CALL apoc.export.csv.query("MATCH (u:User)
 WITH id(u) as nodeId, size((u)-[:retweeted_post_of]->()) as outDegree, size((u)<-[:retweeted_post_of]-()) as inDegree
 MATCH (u: User) WHERE id(u) = nodeId
-RETURN nodeId, u.label, outDegree, inDegree, inDegree + outDegree as degree
+RETURN u.label, outDegree, inDegree, inDegree + outDegree as degree
 ORDER BY nodeId ASC", 'degree_correlation_data.csv', {})
 
 // PageRank
+
 CALL apoc.export.csv.query("CALL gds.pageRank.stream('retweet_network', {maxIterations: 20, dampingFactor: 0.85})
 YIELD nodeId, score
 MATCH (user: User) WHERE id(user) = nodeId
-RETURN nodeId, user.label, score
+RETURN user.label, score as page_rank_score
 ORDER BY nodeId ASC", 'page_rank_correlation_data.csv', {})
 
 // ArticleRank
 CALL apoc.export.csv.query("CALL gds.articleRank.stream('retweet_network', {maxIterations: 20, dampingFactor: 0.85})
 YIELD nodeId, score
 MATCH (user: User) WHERE id(user) = nodeId
-RETURN nodeId, user.label, score
-ORDER BY nodeId ASC", 'page_rank_correlation_data.csv', {})
+RETURN user.label, score as page_rank_score
+ORDER BY nodeId ASC", 'article_rank_correlation_data.csv', {})
 
 
 // Eigenvector
 CALL apoc.export.csv.query("CALL gds.eigenvector.stream('retweet_network', {maxIterations: 40})
 YIELD nodeId, score
 MATCH (user: User) WHERE id(user) = nodeId
-RETURN nodeId, user.label, score
+RETURN user.label, score as eigenvector_score
 ORDER BY nodeId ASC", 'eigenvector_correlation_data.csv', {})
 
 // HITS
 CALL apoc.export.csv.query("CALL gds.alpha.hits.stream('retweet_network', {hitsIterations: 50})
 YIELD nodeId, values
 MATCH (user: User) WHERE id(user) = nodeId
-RETURN nodeId, user.label, values.hub, values.auth
+RETURN user.label, values.hub as hits_hub, values.auth as hits_auth
 ORDER BY nodeId ASC", 'hits_correlation_data.csv', {})
 
 
@@ -171,18 +173,51 @@ CREATE (t)-[:postedBy]->(u)
 } IN TRANSACTIONS OF 50000 ROWS
 
 
-MATCH (t: Tweet) DETACH DELETE t;
-MATCH (u: User) DETACH DELETE u;
+// MATCH (t: Tweet) DETACH DELETE t;
+// MATCH (u: User) DETACH DELETE u;
 
-// :auto
 LOAD CSV WITH HEADERS FROM "file:///tweets_processed.csv" AS csvLine
-// CALL {
-    
+WITH csvLine
+MERGE (t2: Tweet { twitterId: csvLine.in_reply_to_status_id});
+
+
+LOAD CSV WITH HEADERS FROM "file:///tweets_processed.csv" AS csvLine
+WITH csvLine
+MERGE (t3: Tweet { twitterId: csvLine.retweeted_status_id});
+
+
+:auto LOAD CSV WITH HEADERS FROM "file:///tweets_processed.csv" AS csvLine
+CALL {
 WITH csvLine
 MATCH (t1: Tweet { twitterId: csvLine.id })
-MATCH (t2: Tweet { twitterId: csvLine.in_reply_to_user_id})
+MATCH (t2: Tweet { twitterId: csvLine.in_reply_to_status_id})
 MATCH (t3: Tweet { twitterId: csvLine.retweeted_status_id})
-WHERE t2 <> 0 AND t2 <> NULL AND t3 <> 0 AND t3 <> NULL
+
 MERGE (t1)-[:inReplyToStatus { screenName: coalesce(csvLine.in_reply_to_screen_name, 'unknown') }]->(t2)
 MERGE (t1)-[:retweetedStatus]->(t3)
-// } IN TRANSACTIONS OF 50000 ROWS
+} IN TRANSACTIONS OF 50000 ROWS
+
+:auto CALL {
+    MATCH (t1: Tweet) WHERE t1.twitterId = '0' DETACH DELETE t1
+} IN TRANSACTIONS OF 10000 ROWS
+
+:sysinfo
+
+## with gossipcop
+:auto LOAD CSV WITH HEADERS FROM "file:///nodes_to_graph_id.csv" AS csvLine1
+CALL {
+WITH csvLine1
+MERGE (u:User
+ { 
+    node_id: coalesce(csvLine1.user_node_id, "No user_node_id")
+ })
+ON CREATE SET u.graph_id = coalesce(csvLine1.graph_id, "No graph_id"), u.label = coalesce(csvLine1.label, "No label")
+} IN TRANSACTIONS OF 10000 ROWS;
+
+:auto LOAD CSV WITH HEADERS FROM "file:///edges.csv" AS csvLine2
+CALL {
+WITH csvLine2
+MATCH (u1:User { node_id: csvLine2.from })
+MATCH (u2:User { node_id: csvLine2.to })
+MERGE (u1)-[:retweeted_post_of]->(u2)
+} IN TRANSACTIONS OF 10000 ROWS;

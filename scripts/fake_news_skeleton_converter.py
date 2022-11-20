@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import csv
+import os
 
 # feature = 'profile'
 # node_attributes = sp.load_npz(f'new_{feature}_feature.npz')
@@ -33,7 +34,7 @@ def generate_edges_csv(edges_input_path, output_path):
 
         for line in in_file:
             nodes = line.replace("\n", "").split(", ")
-            print([nodes[0], nodes[1]])
+            # print([nodes[0], nodes[1]])
             writer.writerow([nodes[0], nodes[1]])
 
         print('Done')
@@ -46,12 +47,13 @@ def generate_nodes_to_graph_id(graph_labels_npy_path, node_graph_id_npy_path, ou
         writer.writerow(['user_node_id', 'graph_id', 'label'])
       
         for node_id, graph_id in enumerate(node_graph_id):
-            print([node_id, graph_id, int(graph_labels[graph_id])])
+            # print([node_id, graph_id, int(graph_labels[graph_id])])
             writer.writerow([node_id, graph_id, graph_labels[graph_id]])
 
         print('Done')
 
-# graph_labels = np.load('graph_labels.npy')
-# print(graph_labels)
-generate_edges_csv('./resources/A.txt', './output/edges.csv')
-generate_nodes_to_graph_id('./resources/graph_labels.npy', './resources/node_graph_id.npy', './output/nodes_to_graph_id.csv', )
+generate_edges_csv('../resources/gossipcop/A.txt', '../output/gossipcop/edges.csv')
+generate_nodes_to_graph_id('../resources/gossipcop/graph_labels.npy', '../resources/gossipcop/node_graph_id.npy', '../output/gossipcop/nodes_to_graph_id.csv')
+
+generate_edges_csv('../resources/politifact/A.txt', '../output/politifact/edges.csv')
+generate_nodes_to_graph_id('../resources/politifact/graph_labels.npy', '../resources/politifact/node_graph_id.npy', '../output/politifact/nodes_to_graph_id.csv')
