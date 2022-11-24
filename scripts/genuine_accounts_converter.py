@@ -61,7 +61,7 @@ with open('./resources/genuine_accounts.csv/tweets.csv', 'r', encoding='utf-8') 
             line[pos] = re.sub('"|\"', "'", entry)
             line[pos] = line[pos].replace(",", "")
             line[pos] = line[pos].replace("\\", "\\_")
-        
+  
         writer.writerow(line)
         idx += 1
         if i%10000 == 0:
