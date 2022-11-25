@@ -16,20 +16,20 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
-politifact_more_than_1_relation = '../resources/correlation_data/politifact_more_than_1_relation/'
-politifact_at_least_1_relation = '../resources/correlation_data/politifact_at_least_1_relation/'
-politifact_all = '../resources/correlation_data/politifact_all/'
-gossipcop = '../resources/correlation_data/gossipcop/'
+politifact_more_than_1_relation = './resources/correlation_data/politifact_more_than_1_relation/'
+politifact_at_least_1_relation = './resources/correlation_data/politifact_at_least_1_relation/'
+politifact_all = './resources/correlation_data/politifact_all/'
+gossipcop = './resources/correlation_data/gossipcop/'
 
 # TODO: move to json file
 features_files = ['eigenvector_to_label.csv',
-    #'harmonic_closeness_to_label.csv',
+    'harmonic_closeness_to_label.csv',
     'hits_to_label.csv',
     'betweenness_to_label.csv',
     'closeness_to_label.csv',
-    #'page_rank_to_label.csv',
+    'page_rank_to_label.csv',
     'article_rank_to_label.csv',
-    #'degree_to_label.csv'
+    'degree_to_label.csv'
 ]
 
 
@@ -47,21 +47,21 @@ def test_classfiers(df):
         # SVC(kernel="rbf", C=0.025, probability=True),
         # NuSVC(probability=True),
         DecisionTreeClassifier(),
-        RandomForestClassifier(n_estimators=1500)
+        RandomForestClassifier(n_estimators=1500),
         # AdaBoostClassifier(),
-        # GradientBoostingClassifier(),
-        # GaussianNB(),
+        GradientBoostingClassifier(),
+        GaussianNB(),
         # LinearDiscriminantAnalysis(),
         # QuadraticDiscriminantAnalysis()
         ]
 
-        X = df[['eigenvector_score', 
+        X = df[[#'eigenvector_score', 
                # 'harmonic_closeness_centrality', 
-                'hits_hub',
-                'hits_auth',
-                'betweenness_score',
-                'closeness_score',
-            #    'page_rank_score',
+            #    'hits_hub',
+           #     'hits_auth',
+            #    'betweenness_score',
+           #     'closeness_score',
+                'page_rank_score',
             #    'outDegree',
             #    'inDegree',
             #    'degree'
@@ -109,14 +109,14 @@ def test_classfiers_for_two_sets(df1, df2):
         # QuadraticDiscriminantAnalysis()
         ]
 
-        features = ['eigenvector_score', 
+        features = [#'eigenvector_score', 
                # 'harmonic_closeness_centrality', 
                 'hits_hub',
-                'hits_auth',
-                'betweenness_score',
+               # 'hits_auth',
+              #  'betweenness_score',
                 'closeness_score',
              #   'page_rank_score',
-             #   'outDegree',
+                'outDegree',
              #   'inDegree',
               #  'degree'
               ]
@@ -162,8 +162,10 @@ def test_classfiers_for_two_sets(df1, df2):
 df_2 = get_data_frame(get_features_paths(politifact_all, features_files))
 # df_3 = get_data_frame(get_features_paths(politifact_at_least_1_relation, features_files))
 df_gossipcop = get_data_frame(get_features_paths(gossipcop, features_files))
-#est_classfiers(df_2)
-test_classfiers_for_two_sets(df_gossipcop, df_2)
+#test_classfiers(pd.concat([df_2, df_gossipcop], join='outer', axis=0))
+test_classfiers(df_2)
+
+#test_classfiers_for_two_sets(df_gossipcop, df_2)
 
 # dfs = pd.concat([df_2, df_gossipcop])
 # print(dfs)
