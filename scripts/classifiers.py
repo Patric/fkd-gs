@@ -15,11 +15,20 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, Gradien
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.model_selection import KFold
+
 
 politifact_more_than_1_relation = './resources/correlation_data/politifact_more_than_1_relation/'
 politifact_at_least_1_relation = './resources/correlation_data/politifact_at_least_1_relation/'
 politifact_all = './resources/correlation_data/politifact_all/'
 gossipcop = './resources/correlation_data/gossipcop/'
+
+e13_followers = './resources/correlation_data/MIB/E13/'
+fsf_followers = './resources/correlation_data/MIB/FSF/'
+int_followers = './resources/correlation_data/MIB/INT/'
+twt_followers = './resources/correlation_data/MIB/TWT/'
+tfp_followers = './resources/correlation_data/MIB/TFP/'
+
 
 # TODO: move to json file
 features_files = ['eigenvector_to_label.csv',
@@ -59,9 +68,9 @@ def test_classfiers(df):
                # 'harmonic_closeness_centrality', 
             #    'hits_hub',
            #     'hits_auth',
-            #    'betweenness_score',
-           #     'closeness_score',
-                'page_rank_score',
+                'betweenness_score',
+                'closeness_score',
+            #    'page_rank_score',
             #    'outDegree',
             #    'inDegree',
             #    'degree'
@@ -111,12 +120,12 @@ def test_classfiers_for_two_sets(df1, df2):
 
         features = [#'eigenvector_score', 
                # 'harmonic_closeness_centrality', 
-                'hits_hub',
+               #'hits_hub',
                # 'hits_auth',
-              #  'betweenness_score',
+                'betweenness_score',
                 'closeness_score',
              #   'page_rank_score',
-                'outDegree',
+             #   'outDegree',
              #   'inDegree',
               #  'degree'
               ]
@@ -147,6 +156,8 @@ def test_classfiers_for_two_sets(df1, df2):
                 train_predictions = clf.predict(X2_test)
                 acc = accuracy_score(y2_test, train_predictions)
                 print("Accuracy: {:.4%}".format(acc))
+                
+
 
                 train_predictions = clf.predict_proba(X2_test)
                 ll = log_loss(y2_test, train_predictions)
@@ -158,14 +169,26 @@ def test_classfiers_for_two_sets(df1, df2):
 
         print("=" * 30)
 
+
+
+
 # df_1 = get_data_frame(get_features_paths(politifact_more_than_1_relation, features_files))
 df_2 = get_data_frame(get_features_paths(politifact_all, features_files))
 # df_3 = get_data_frame(get_features_paths(politifact_at_least_1_relation, features_files))
 df_gossipcop = get_data_frame(get_features_paths(gossipcop, features_files))
 #test_classfiers(pd.concat([df_2, df_gossipcop], join='outer', axis=0))
-test_classfiers(df_2)
+#test_classfiers(df_2)
+dfs = list(map(lambda dataset_path: get_data_frame(get_features_paths(dataset_path, features_files)),
+[e13_followers, int_followers, twt_followers, fsf_followers, tfp_followers]))
 
-#test_classfiers_for_two_sets(df_gossipcop, df_2)
+# df_fsf = get_data_frame(get_features_paths(fsf_followers, features_files))
+# df_tfp = get_data_frame(get_features_paths(tfp_followers, features_files))
+
+dfs_followers = pd.concat(dfs)
+
+# dfs_followers = dfs_followers.query('degree != 0')
+test_classfiers(dfs_followers.query('degree != 0'))
+# test_classfiers_for_two_sets(dfs_followers.query('degree != 0'), pd.concat([df_fsf, df_tfp]).query('degree != 0'))
 
 # dfs = pd.concat([df_2, df_gossipcop])
 # print(dfs)

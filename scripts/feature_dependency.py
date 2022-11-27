@@ -22,6 +22,13 @@ politifact_at_least_1_relation = './resources/correlation_data/politifact_at_lea
 politifact_all = './resources/correlation_data/politifact_all/'
 gossipcop = './resources/correlation_data/gossipcop/'
 
+
+e13_followers = './resources/correlation_data/MIB/E13/'
+fsf_followers = './resources/correlation_data/MIB/FSF/'
+int_followers = './resources/correlation_data/MIB/INT/'
+twt_followers = './resources/correlation_data/MIB/TWT/'
+tfp_followers = './resources/correlation_data/MIB/TFP/'
+
 # TODO: move to json file
 features_files = [
     'eigenvector_to_label.csv', 'harmonic_closeness_to_label.csv',
@@ -115,12 +122,20 @@ def select_features_r(X_train, y_train, X_test):
 
     return X_train_fs, X_test_fs, fs
 
-df = get_data_frame(get_features_paths(gossipcop, features_files))
+ 
+dfs = list(map(lambda dataset_path: get_data_frame(get_features_paths(dataset_path, features_files)),
+[e13_followers, fsf_followers, int_followers, twt_followers, tfp_followers]))
 
-# with pd.option_context('display.max_rows', None, 'display.max_columns', None,
-#                        'display.precision', 3):
-#     pd.options.display.float_format = '{:.3f}'.format
-#     print(df.corr(method='pearson'))
+
+df = pd.concat(dfs)
+print(df.size)
+df = df.query('inDegree != 0')
+
+
+with pd.option_context('display.max_rows', None, 'display.max_columns', None,
+                       'display.precision', 3):
+    pd.options.display.float_format = '{:.3f}'.format
+    print(df.corr(method='pearson'))
 
 X = df[['eigenvector_score', 'harmonic_closeness_centrality', 'hits_hub',
     'hits_auth', 'betweenness_score', 'closeness_score', 'page_rank_score',
@@ -128,14 +143,14 @@ X = df[['eigenvector_score', 'harmonic_closeness_centrality', 'hits_hub',
 
 y = df['user.label']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
 
 # X_train_fs, X_test_fs, fs = select_features(X_train, y_train, X_test, f_regression)
 
-# select_features_mutual_info(X_train, y_train, X_test)
-# select_features_f(X_train, y_train, X_test)
-# select_features_chi2(X_train, y_train, X_test)
-# select_features_r(X_train, y_train, X_test)
+select_features_mutual_info(X_train, y_train, X_test)
+select_features_f(X_train, y_train, X_test)
+select_features_chi2(X_train, y_train, X_test)
+select_features_r(X_train, y_train, X_test)
 tree_classifier(X_train, y_train, X_test)
 
 # what are scores for the features
