@@ -18,6 +18,8 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.model_selection import KFold
 
 
+
+
 politifact_more_than_1_relation = './resources/correlation_data/politifact_more_than_1_relation/'
 politifact_at_least_1_relation = './resources/correlation_data/politifact_at_least_1_relation/'
 politifact_all = './resources/correlation_data/politifact_all/'

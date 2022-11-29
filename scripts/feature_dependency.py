@@ -14,8 +14,10 @@ from sklearn.feature_selection import f_classif
 from sklearn.feature_selection import chi2
 
 from sklearn.model_selection import train_test_split
-from matplotlib import pyplot
 
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
 
 politifact_more_than_1_relation = './resources/correlation_data/politifact_more_than_1_relation/'
 politifact_at_least_1_relation = './resources/correlation_data/politifact_at_least_1_relation/'
@@ -126,10 +128,12 @@ def select_features_r(X_train, y_train, X_test):
 dfs = list(map(lambda dataset_path: get_data_frame(get_features_paths(dataset_path, features_files)),
 [e13_followers, fsf_followers, int_followers, twt_followers, tfp_followers]))
 
+df_politi = get_data_frame(get_features_paths(politifact_all, features_files))
+df_gossip = get_data_frame(get_features_paths(gossipcop, features_files))
+df = pd.concat([df_politi, df_gossip])
 
-df = pd.concat(dfs)
 print(df.size)
-df = df.query('inDegree != 0')
+#df = df.query('inDegree != 0')
 
 
 with pd.option_context('display.max_rows', None, 'display.max_columns', None,
@@ -137,9 +141,18 @@ with pd.option_context('display.max_rows', None, 'display.max_columns', None,
     pd.options.display.float_format = '{:.3f}'.format
     print(df.corr(method='pearson'))
 
-X = df[['eigenvector_score', 'harmonic_closeness_centrality', 'hits_hub',
-    'hits_auth', 'betweenness_score', 'closeness_score', 'page_rank_score',
-    'outDegree', 'inDegree', 'degree']]
+X = df[[
+        'eigenvector_score',
+        'harmonic_closeness_centrality',
+        'hits_hub',
+        'hits_auth',
+        'betweenness_score',
+        'closeness_score',
+        'page_rank_score',
+        'outDegree',
+        'inDegree',
+        'degree'
+        ]]
 
 y = df['user.label']
 
@@ -153,6 +166,18 @@ select_features_chi2(X_train, y_train, X_test)
 select_features_r(X_train, y_train, X_test)
 tree_classifier(X_train, y_train, X_test)
 
+
+linreg=LinearRegression()
+linreg.fit(X_train,y_train)
+y_pred=linreg.predict(X_test)
+Accuracy=r2_score(y_test,y_pred)*100
+print(" Accuracy of the model is %.2f" %Accuracy)
+plt.scatter(y_test,y_pred)
+plt.xlabel('Actual')
+plt.ylabel('Predicted')
+plt.show()
+sns.regplot(x=y_test,y=y_pred,ci=None,color ='red')
+plt.show()
 # what are scores for the features
 
 # for i in range(len(fs.scores_)):KB
