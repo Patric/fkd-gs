@@ -71,6 +71,7 @@ def select_features_chi2(X_train, y_train, X_test):
     for i in range(len(fs.scores_)):
         print('Feature %s: score: %f p_value: %f' % (fs.feature_names_in_[i], fs.scores_[i], fs.pvalues_[i]))
         # plot p_value
+        
     # pyplot.bar([i for i in range(len(fs.pvalues_))], fs.pvalues_)
     # pyplot.show()
 
