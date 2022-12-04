@@ -46,7 +46,7 @@ ORDER BY nodeId ASC", 'page_rank_to_label.csv', {});
 CALL apoc.export.csv.query("CALL gds.articleRank.stream('interaction_network', {maxIterations: 20, dampingFactor: 0.85})
 YIELD nodeId, score
 MATCH (user: User) WHERE id(user) = nodeId
-RETURN user.label, score as page_rank_score
+RETURN user.label, score as article_rank_score
 ORDER BY nodeId ASC", 'article_rank_to_label.csv', {});
 
 // Eigenvector

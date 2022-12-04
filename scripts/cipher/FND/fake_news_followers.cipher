@@ -1,0 +1,155 @@
+CREATE CONSTRAINT FOR (u:User) REQUIRE u.twitterId IS UNIQUE;
+
+:auto LOAD CSV WITH HEADERS FROM "file:///users_following.csv" AS csvLine1
+CALL {
+WITH csvLine1
+MERGE (user:User
+ { 
+    twitterId: csvLine1.user_id
+ })
+ ON CREATE SET user.label = csvLine1.label
+MERGE (following:User
+ { 
+    twitterId: csvLine1.following
+ })
+ON CREATE SET following.label = csvLine1.label
+CREATE (user)-[:follows]->(following)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+:auto LOAD CSV WITH HEADERS FROM "file:///users_followers.csv" AS csvLine1
+CALL {
+WITH csvLine1
+MERGE (user:User
+ { 
+    twitterId: csvLine1.user_id
+ })
+ ON CREATE SET user.label = csvLine1.label
+MERGE (follower:User
+ { 
+    twitterId: csvLine1.followers
+ })
+  ON CREATE SET follower.label = csvLine1.label
+CREATE (follower)-[:follows]->(user)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:auto CALL apoc.load.json("file:///users_followers.json")
+YIELD value
+CALL {
+WITH value
+UNWIND value.users_followers AS user_followers
+CREATE (u: User {twitterId: user_followers.user_id})
+} IN TRANSACTIONS OF 10000 ROWS;
+
+:auto CALL apoc.load.json("file:///users_followers.json")
+YIELD value
+CALL {
+WITH value
+UNWIND value.users_followers AS user_followers
+WITH user_followers
+UNWIND user_followers.followers as follower_id
+MERGE (follower: User {twitterId: follower_id })
+} IN TRANSACTIONS OF 10000 ROWS;
+
+
+
+
+
+
+CREATE CONSTRAINT FOR (u:User) REQUIRE u.twitterId IS UNIQUE;
+
+:auto LOAD CSV WITH HEADERS FROM "file:///users_followers.csv" AS csvLine1
+CALL {
+WITH csvLine1
+MERGE (user:User
+ { 
+    twitterId: csvLine1.user_id
+ })
+MERGE (follower:User
+ { 
+    twitterId: csvLine1.followers
+ })
+CREATE (follower)-[:follows]->(user)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+
+:auto LOAD CSV WITH HEADERS FROM "file:///users_following.csv" AS csvLine1
+CALL {
+WITH csvLine1
+MERGE (user:User
+ { 
+    twitterId: csvLine1.user_id
+ })
+MERGE (following:User
+ { 
+    twitterId: csvLine1.following
+ })
+CREATE (user)-[:follows]->(following)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+
+:auto LOAD CSV WITH HEADERS FROM "file:///profiles_to_label.csv" AS csvLine1
+CALL {
+WITH csvLine1
+MATCH (user:User
+ { 
+    twitterId: csvLine1.user_id
+ })
+SET user.label = csvLine1.label
+} IN TRANSACTIONS OF 10000 ROWS;
+
+
+
+:auto LOAD CSV WITH HEADERS FROM "file:///users_followers.csv" AS csvLine1
+CALL {
+WITH csvLine1
+MERGE (user:User
+ { 
+    twitterId: csvLine1.user_id
+ })
+ ON CREATE SET user.label = csvLine1.label
+MERGE (follower:User
+ { 
+    twitterId: csvLine1.followers
+ })
+  ON CREATE SET follower.label = csvLine1.label
+CREATE (follower)-[:follows]->(user)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+
+
+
+YIELD value
+WITH value
+UNWIND value.users_followers AS user_followers
+MERGE (u: User {twitterId: user_followers.user_id})
+WITH user_followers, u
+UNWIND user_followers.followers as follower_id
+MERGE (follower: User {twitterId: follower_id })
+
+:auto CALL apoc.load.json("file:///users_followers.json")
+YIELD value
+CALL {
+WITH value
+UNWIND value.users_followers AS user_followers
+MERGE (u: User {twitterId: user_followers.user_id})
+WITH user_followers, u
+UNWIND user_followers.followers as follower_id
+MERGE (follower: User {twitterId: follower_id })} IN TRANSACTIONS OF 10000 ROWS;
+
+MERGE (follower)-[:follows]->(u)

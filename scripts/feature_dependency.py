@@ -131,54 +131,66 @@ dfs = list(map(lambda dataset_path: get_data_frame(get_features_paths(dataset_pa
 
 df_politi = get_data_frame(get_features_paths(politifact_all, features_files))
 df_gossip = get_data_frame(get_features_paths(gossipcop, features_files))
-df = pd.concat([df_politi, df_gossip])
+# df = pd.concat(dfs)
+# df = df.query('degree > 1')
+df_gossip = df_gossip.rename(columns={'user.label' : 'label'})
+print(df_gossip.query('label == 1').shape)
+print(df_gossip.query('label == 0').shape)
+# for data_frame in dfs:
+#     print(data_frame.shape)
 
-print(df.size)
-#df = df.query('inDegree != 0')
-
-
-with pd.option_context('display.max_rows', None, 'display.max_columns', None,
-                       'display.precision', 3):
-    pd.options.display.float_format = '{:.3f}'.format
-    print(df.corr(method='pearson'))
-
-X = df[[
-        'eigenvector_score',
-        'harmonic_closeness_centrality',
-        'hits_hub',
-        'hits_auth',
-        'betweenness_score',
-        'closeness_score',
-        'page_rank_score',
-        'outDegree',
-        'inDegree',
-        'degree'
-        ]]
-
-y = df['user.label']
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
-
-# X_train_fs, X_test_fs, fs = select_features(X_train, y_train, X_test, f_regression)
-
-select_features_mutual_info(X_train, y_train, X_test)
-select_features_f(X_train, y_train, X_test)
-select_features_chi2(X_train, y_train, X_test)
-select_features_r(X_train, y_train, X_test)
-tree_classifier(X_train, y_train, X_test)
+# print("------------")
+# for data_frame in dfs:
+#     print(data_frame.query('degree > 1').shape)
 
 
-linreg=LinearRegression()
-linreg.fit(X_train,y_train)
-y_pred=linreg.predict(X_test)
-Accuracy=r2_score(y_test,y_pred)*100
-print(" Accuracy of the model is %.2f" %Accuracy)
-plt.scatter(y_test,y_pred)
-plt.xlabel('Actual')
-plt.ylabel('Predicted')
-plt.show()
-sns.regplot(x=y_test,y=y_pred,ci=None,color ='red')
-plt.show()
+
+# with pd.option_context('display.max_rows', None, 'display.max_columns', None,
+#                        'display.precision', 3):
+#     pd.options.display.float_format = '{:.3f}'.format
+#     print(df.corr(method='pearson'))
+
+# X = df[[
+#         'eigenvector_score',
+#         'harmonic_closeness_centrality',
+#         'hits_hub',
+#         'hits_auth',
+#         'betweenness_score',
+#         'closeness_score',
+#         'page_rank_score',
+#         'outDegree',
+#         'inDegree',
+#         'degree'
+#         ]]
+
+# y = df['user.label']
+
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
+
+# # X_train_fs, X_test_fs, fs = select_features(X_train, y_train, X_test, f_regression)
+
+# select_features_mutual_info(X_train, y_train, X_test)
+# select_features_f(X_train, y_train, X_test)
+# select_features_chi2(X_train, y_train, X_test)
+# select_features_r(X_train, y_train, X_test)
+# tree_classifier(X_train, y_train, X_test)
+
+
+# linreg=LinearRegression()
+# linreg.fit(X_train,y_train)
+# y_pred=linreg.predict(X_test)
+# Accuracy=r2_score(y_test,y_pred)*100
+# print(" Accuracy of the model is %.2f" %Accuracy)
+# plt.scatter(y_test,y_pred)
+# plt.xlabel('Actual')
+# plt.ylabel('Predicted')
+# plt.show()
+# sns.regplot(x=y_test,y=y_pred,ci=None,color ='red')
+# plt.show()
+
+
+
+
 # what are scores for the features
 
 # for i in range(len(fs.scores_)):KB
