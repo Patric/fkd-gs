@@ -1,5 +1,7 @@
 CREATE CONSTRAINT FOR (u:User) REQUIRE u.twitterId IS UNIQUE;
 
+CALL gds.graph.project('follower_network','User','follows');
+
 :auto LOAD CSV WITH HEADERS FROM "file:///users_following.csv" AS csvLine1
 CALL {
 WITH csvLine1
@@ -32,17 +34,55 @@ MERGE (follower:User
 CREATE (follower)-[:follows]->(user)
 } IN TRANSACTIONS OF 10000 ROWS;
 
+:auto MATCH (user:User)
+WHERE size([(user)-[:follows]->() | user]) + size([(user)<-[:follows]-() | user]) <= 1
+with user LIMIT 1000000
+CALL { with user
+DETACH DELETE user } IN TRANSACTIONS OF 10000 ROWS
+
+:auto MATCH (user:User)
+WHERE size([(user)-[:follows]->() | user]) + size([(user)<-[:follows]-() | user]) <= 1
+CALL { with user
+DETACH DELETE user } IN TRANSACTIONS OF 10000 ROWS
+
+CALL gds.alpha.graph.sample.rwr(
+  'follower_network_sampled_with_stratification',
+  'follower_network',
+  { samplingRatio: 0.3, nodeLabelStratification: True }
+);
 
 
 
+2 713 356
+
+6 240 964
+
+
+componentCount	min	max	mean
+38	1	2712927	71403.92105263157
 
 
 
+nodeProjection	relationshipProjection	graphName	nodeCount	relationshipCount	projectMillis
+{
+  "User": {
+    "label": "User",
+    "properties": {
 
+    }
+  }
+}
+{
+  "follows": {
+    "orientation": "NATURAL",
+    "aggregation": "DEFAULT",
+    "type": "follows",
+    "properties": {
 
-
-
-
+    }
+  }
+}
+"follower_network"	2713356	12660581	12532
 
 
 
