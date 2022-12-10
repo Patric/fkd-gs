@@ -1,13 +1,13 @@
 import re
 
 table = """
-eigenvector_score 	0.244 	3560.221 	0.000 	19.645 	0.000 	-0.066 	0.163
-harmonic_closeness_centrality 	0.263 	2828.637 	0.000 	3.670 	0.055 	-0.059 	0.168
-hits_hub 	0.103 	3.883 	0.049 	0.077 	0.782 	-0.002 	0.069
-hits_auth 	0.261 	1850.662 	0.000 	9.523 	0.002 	-0.048 	0.159
-closeness_score 	0.260 	1961.225 	0.000 	2.354 	0.125 	-0.049 	0.174
-page_rank_score 	0.266 	4.536 	0.033 	306.354 	0.000 	-0.002 	0.136
-article_rank_score 	0.271 	61.463 	0.000 	164.771 	0.000 	-0.009 	0.131
+Classifier 	Accuracy 	Log Loss
+DecisionTreeClassifier 	33.867089 	22.852851
+RandomForestClassifier 	86.135023 	0.685187
+GradientBoostingClassifier 	89.341864 	0.376236
+GaussianNB 	8.761579 	5.609309
+KNeighborsClassifier 	89.955570 	3.486562
+AdaBoostClassifier 	90.237217 	0.683156
 """
 
 lines = table.split('\n')
